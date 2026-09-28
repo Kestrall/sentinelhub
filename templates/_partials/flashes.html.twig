@@ -1,0 +1,16 @@
+{% import '_partials/macros.html.twig' as ui %}
+{% for token in app.flashes('token') %}
+    <div class="token-reveal" role="alert">
+        <div class="token-reveal__head">{{ ui.icon('key') }}<b>Token d'API de l'appareil</b></div>
+        <p>Copie-le maintenant et flashe-le dans le firmware : il ne sera <b>plus jamais affiché</b> (seul son hash SHA-256 est conservé).</p>
+        <div class="code-line"><code data-copy-source>{{ token }}</code><button class="btn btn--ghost btn--sm" type="button" data-copy>{{ ui.icon('copy') }}Copier</button></div>
+    </div>
+{% endfor %}
+{% for type in ['success', 'info', 'error'] %}
+    {% for message in app.flashes(type) %}
+        <div class="flash flash--{{ type }}" role="status">
+            <span>{{ message }}</span>
+            <button type="button" class="flash__close" data-dismiss aria-label="Fermer">×</button>
+        </div>
+    {% endfor %}
+{% endfor %}

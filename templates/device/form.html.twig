@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}{{ device ? 'Modifier ' ~ device.name : 'Nouvel appareil' }}{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div>
+        <a class="back" href="{{ device ? path('app_device_show', {id: device.id}) : path('app_device_index') }}">← Retour</a>
+        <h1>{{ device ? 'Modifier l\'appareil' : 'Enregistrer un appareil' }}</h1>
+    </div>
+</div>
+
+<div class="grid-form">
+    <section class="panel">
+        {{ form_start(form, {attr: {class: 'form form--grid', novalidate: 'novalidate'}}) }}
+            {{ form_widget(form) }}
+            <div class="form__actions">
+                <button class="btn btn--primary" type="submit">{{ device ? 'Enregistrer' : 'Créer et générer le token' }}</button>
+            </div>
+        {{ form_end(form) }}
+    </section>
+    <aside class="panel panel--hint">
+        <h2>{{ ui.icon('key') }} Comment ça marche&nbsp;?</h2>
+        <ol class="steps">
+            <li>Enregistre l'appareil avec son adresse MAC (<code>esp_read_mac()</code>).</li>
+            <li>SentinelHub génère un <b>token unique</b> affiché une seule fois.</li>
+            <li>Stocke-le dans la partition NVS chiffrée du firmware SentinelOS.</li>
+            <li>L'ESP32 poste ses mesures sur <code>/api/v1/telemetry</code>.</li>
+        </ol>
+    </aside>
+</div>
+{% endblock %}

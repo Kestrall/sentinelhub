@@ -1,0 +1,13 @@
+{% extends 'security/_layout.html.twig' %}
+{% block title %}Inscription{% endblock %}
+{% block auth %}
+    <h1>Créer un compte</h1>
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {{ form_row(form.fullName) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.plainPassword.first) }}
+        {{ form_row(form.plainPassword.second) }}
+        <button class="btn btn--primary btn--block" type="submit">Créer mon compte</button>
+    {{ form_end(form) }}
+    <p class="muted">Déjà inscrit ? <a href="{{ path('app_login') }}">Se connecter</a></p>
+{% endblock %}

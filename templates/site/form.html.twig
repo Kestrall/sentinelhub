@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ site ? 'Modifier ' ~ site.name : 'Nouveau site' }}{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div>
+        <a class="back" href="{{ path('app_site_index') }}">← Sites</a>
+        <h1>{{ site ? 'Modifier le site' : 'Nouveau site' }}</h1>
+    </div>
+</div>
+<section class="panel narrow">
+    {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+        {{ form_widget(form) }}
+        <div class="form__actions"><button class="btn btn--primary" type="submit">Enregistrer</button></div>
+    {{ form_end(form) }}
+</section>
+{% endblock %}

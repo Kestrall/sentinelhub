@@ -1,0 +1,23 @@
+{% extends 'security/_layout.html.twig' %}
+{% block title %}Connexion{% endblock %}
+{% block auth %}
+    <h1>Connexion</h1>
+    {% if error %}
+        <div class="flash flash--error" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+    <form method="post" class="form">
+        <div class="field">
+            <label for="username">Email</label>
+            <input type="email" value="{{ last_username }}" name="_username" id="username" autocomplete="email" required autofocus>
+        </div>
+        <div class="field">
+            <label for="password">Mot de passe</label>
+            <input type="password" name="_password" id="password" autocomplete="current-password" required>
+        </div>
+        <label class="check"><input type="checkbox" name="_remember_me"> Rester connecté</label>
+        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+        <button class="btn btn--primary btn--block" type="submit">Se connecter</button>
+    </form>
+    <p class="muted small">Démo : <code>demo@sentinelhub.dev</code> / <code>sentinel2026</code></p>
+    <p class="muted">Pas encore de compte ? <a href="{{ path('app_register') }}">Créer un compte</a></p>
+{% endblock %}

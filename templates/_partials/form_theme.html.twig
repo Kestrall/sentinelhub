@@ -1,0 +1,18 @@
+{% use 'form_div_layout.html.twig' %}
+
+{# Chaque champ dans un bloc .field, erreurs sous le champ, en rouge. #}
+{% block form_row %}
+    {%- set widget_attr = errors|length ? {attr: attr|merge({'aria-invalid': 'true'})} : {} -%}
+    <div class="field{{ errors|length ? ' field--error' }}">
+        {{- form_label(form) -}}
+        {{- form_widget(form, widget_attr) -}}
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{% endblock %}
+
+{% block form_errors %}
+    {%- if errors|length > 0 -%}
+        <ul class="field__errors">{% for error in errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+    {%- endif -%}
+{% endblock %}

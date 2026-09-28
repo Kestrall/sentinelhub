@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}Sites{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div><h1>Sites</h1><p class="muted">Lieux surveillés et appareils rattachés</p></div>
+    <a class="btn btn--primary" href="{{ path('app_site_new') }}">{{ ui.icon('plus') }}<span>Nouveau site</span></a>
+</div>
+
+<div class="site-grid">
+    {% for site in sites %}
+        {% set online = site.devices|filter(d => d.online)|length %}
+        <article class="panel site-card">
+            <header class="panel__head">
+                <div>
+                    <h2>{{ site.name }}</h2>
+                    <p class="muted small">{{ ui.icon('pin') }} {{ site.location ?? 'Sans localisation' }} · {{ site.timezone }}</p>
+                </div>
+                <a class="icon-btn" href="{{ path('app_site_edit', {id: site.id}) }}" aria-label="Modifier">{{ ui.icon('edit') }}</a>
+            </header>
+            <div class="gauge gauge--lg"><span style="--p: {{ site.devices|length ? (online / site.devices|length * 100)|round : 0 }}%"></span></div>
+            <p class="small"><b>{{ online }}</b> / {{ site.devices|length }} appareil(s) en ligne</p>
+            <ul class="chips">
+                {% for device in site.devices %}
+                    <li><a class="chip{{ device.online ? ' chip--on' : '' }}" href="{{ path('app_device_show', {id: device.id}) }}">{{ ui.icon(device.type.icon) }}{{ device.name }}</a></li>
+                {% endfor %}
+            </ul>
+            <form method="post" action="{{ path('app_site_delete', {id: site.id}) }}" data-confirm="Supprimer ce site et tous ses appareils ?" class="site-card__delete">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete-site-' ~ site.id) }}">
+                <button class="btn btn--ghost btn--sm">{{ ui.icon('trash') }}Supprimer</button>
+            </form>
+        </article>
+    {% else %}
+        <div class="panel empty">Aucun site pour l'instant. <a href="{{ path('app_site_new') }}">Crée le premier</a>.</div>
+    {% endfor %}
+</div>
+{% endblock %}

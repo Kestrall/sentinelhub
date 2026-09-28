@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}Événements{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div><h1>Événements</h1><p class="muted">Journal stocké dans MongoDB · 100 derniers</p></div>
+</div>
+
+<nav class="filters" aria-label="Type d'événement">
+    <a class="chip{{ current is null ? ' chip--active' }}" href="{{ path('app_event_index') }}">Tous</a>
+    {% for key, label in types %}
+        <a class="chip{{ current == key ? ' chip--active' }}" href="{{ path('app_event_index', {type: key}) }}">{{ label }} {% if counts[key] is defined %}<small>{{ counts[key] }}</small>{% endif %}</a>
+    {% endfor %}
+</nav>
+
+<div class="table-wrap panel">
+    <table class="table table--responsive">
+        <thead><tr><th>Date</th><th>Appareil</th><th>Type</th><th>Message</th><th>Données</th></tr></thead>
+        <tbody>
+        {% for event in events %}
+            <tr>
+                <td data-label="Date" class="nowrap">{{ ui.time(event.occurredAt) }}</td>
+                <td data-label="Appareil"><a href="{{ path('app_device_show', {id: event.deviceId}) }}">{{ event.deviceName }}</a></td>
+                <td data-label="Type">{{ ui.severity(event.severity) }} <span class="small">{{ event.typeLabel }}</span></td>
+                <td data-label="Message">{{ event.message }}</td>
+                <td data-label="Données">{% if event.payload %}<code class="payload">{{ event.payload|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES')) }}</code>{% else %}<span class="muted">—</span>{% endif %}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="empty">Aucun événement.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

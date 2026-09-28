@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}Alertes{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div><h1>Alertes</h1><p class="muted">Déclenchées par les règles de seuil ou le mode armé</p></div>
+    {% if alerts|filter(a => not a.acknowledged)|length %}
+        <form method="post" action="{{ path('app_alert_ack_all') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('ack') }}">
+            <button class="btn btn--ghost">{{ ui.icon('check') }}<span>Tout acquitter</span></button>
+        </form>
+    {% endif %}
+</div>
+
+<nav class="tabs tabs--links" aria-label="Filtre">
+    <a href="{{ path('app_alert_index') }}" {{ not all ? 'aria-current="page"' }}>Ouvertes</a>
+    <a href="{{ path('app_alert_index', {all: 1}) }}" {{ all ? 'aria-current="page"' }}>Historique</a>
+</nav>
+
+<ul class="alert-list alert-list--page panel">
+    {% for alert in alerts %}
+        <li class="alert-item alert-item--{{ alert.severity.value }}{{ alert.acknowledged ? ' is-acked' : '' }}" id="alert-{{ alert.id }}">
+            <div>
+                {{ ui.severity(alert.severity.value) }}
+                <p>{{ alert.message }}</p>
+                <small class="muted">
+                    <a href="{{ path('app_device_show', {id: alert.device.id}) }}">{{ alert.device.name }}</a> · {{ alert.device.site.name }} · {{ ui.time(alert.createdAt) }}
+                    {% if alert.acknowledged %} · acquittée par {{ alert.acknowledgedBy.fullName ?? '?' }} {{ ui.time(alert.acknowledgedAt) }}{% endif %}
+                </small>
+            </div>
+            {% if not alert.acknowledged %}
+                <form method="post" action="{{ path('app_alert_ack', {id: alert.id}) }}" data-ack>
+                    <input type="hidden" name="_token" value="{{ csrf_token('ack') }}">
+                    <button class="btn btn--ghost btn--sm">{{ ui.icon('check') }}Acquitter</button>
+                </form>
+            {% endif %}
+        </li>
+    {% else %}
+        <li class="empty">{{ ui.icon('shield') }} Aucune alerte{{ all ? '' : ' ouverte' }}.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

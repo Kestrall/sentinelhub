@@ -1,0 +1,50 @@
+{% import '_partials/macros.html.twig' as ui %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#0b0f17">
+    <title>{% block title %}Supervision{% endblock %} · SentinelHub</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z%22 fill=%22%2322d3a6%22/></svg>">
+    {% block javascripts %}{{ importmap('app') }}{% endblock %}
+</head>
+<body class="{% block body_class %}layout{% endblock %}">
+{{ include('_partials/icons.html.twig') }}
+{% block layout %}
+    <a class="skip" href="#main">Aller au contenu</a>
+
+    <header class="topbar">
+        <button class="icon-btn" type="button" data-nav-toggle aria-label="Menu" aria-expanded="false" aria-controls="sidebar">{{ ui.icon('menu') }}</button>
+        <a class="brand" href="{{ path('app_dashboard') }}">{{ ui.icon('shield') }}<span>Sentinel<b>Hub</b></span></a>
+        <span class="topbar__user" aria-hidden="true">{{ app.user.initials }}</span>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <a class="brand brand--lg" href="{{ path('app_dashboard') }}">{{ ui.icon('shield') }}<span>Sentinel<b>Hub</b></span></a>
+        {% set route = app.request.attributes.get('_route') %}
+        <nav class="nav" aria-label="Navigation principale">
+            <a href="{{ path('app_dashboard') }}" {{ route == 'app_dashboard' ? 'aria-current="page"' }}>{{ ui.icon('grid') }}Tableau de bord</a>
+            <a href="{{ path('app_device_index') }}" {{ route starts with 'app_device' ? 'aria-current="page"' }}>{{ ui.icon('chip') }}Appareils</a>
+            <a href="{{ path('app_alert_index') }}" {{ route starts with 'app_alert' ? 'aria-current="page"' }}>{{ ui.icon('bell') }}Alertes <span class="nav__badge" data-alert-badge hidden></span></a>
+            <a href="{{ path('app_event_index') }}" {{ route starts with 'app_event' ? 'aria-current="page"' }}>{{ ui.icon('pulse') }}Événements</a>
+            <a href="{{ path('app_site_index') }}" {{ route starts with 'app_site' ? 'aria-current="page"' }}>{{ ui.icon('pin') }}Sites</a>
+        </nav>
+        <div class="sidebar__footer">
+            <div class="me">
+                <span class="avatar">{{ app.user.initials }}</span>
+                <span class="me__text"><b>{{ app.user.fullName }}</b><small>{{ app.user.email }}</small></span>
+            </div>
+            <a class="icon-btn" href="{{ path('app_logout') }}" title="Déconnexion" aria-label="Déconnexion">{{ ui.icon('logout') }}</a>
+        </div>
+    </aside>
+    <div class="backdrop" data-nav-backdrop hidden></div>
+
+    <main class="main" id="main">
+        {{ include('_partials/flashes.html.twig') }}
+        {% block body %}{% endblock %}
+    </main>
+{% endblock %}
+</body>
+</html>

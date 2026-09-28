@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block body_class %}auth{% endblock %}
+{% block layout %}
+<main class="auth__wrap">
+    <section class="auth__card">
+        <a class="brand brand--lg" href="{{ path('app_login') }}">{{ ui.icon('shield') }}<span>Sentinel<b>Hub</b></span></a>
+        {{ include('_partials/flashes.html.twig') }}
+        {% block auth %}{% endblock %}
+    </section>
+    <aside class="auth__side" aria-hidden="true">
+        <pre class="terminal"><span class="t-dim">$ sentinel-cli fleet status</span>
+<span class="t-ok">●</span> esp32-s3   salon.climat     21.8°C  -58dBm
+<span class="t-ok">●</span> esp32-cam  entree.camera    armed   -63dBm
+<span class="t-warn">●</span> esp32-c3   garage.porte     bat 18%
+<span class="t-ok">●</span> esp32      sirene.rdc       armed   -71dBm
+<span class="t-crit">●</span> esp32-s3   rack.temp        39.2°C  <span class="t-crit">ALERT</span>
+<span class="t-dim">secure boot v2 ✓  flash encryption ✓  ota signed ✓</span><span class="cursor">▌</span></pre>
+        <p>Supervision temps réel de ta flotte ESP32&nbsp;: télémétrie, détection d'intrusion, alertes.</p>
+    </aside>
+</main>
+{% endblock %}

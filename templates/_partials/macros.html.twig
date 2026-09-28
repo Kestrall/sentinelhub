@@ -1,0 +1,27 @@
+{% macro icon(name, class = '') %}<svg class="icon {{ class }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{% endmacro %}
+
+{% macro status(device) %}
+  {% if device.online %}
+    <span class="pill pill--online" data-status><span class="dot"></span>En ligne</span>
+  {% elseif device.lastSeenAt %}
+    <span class="pill pill--offline" data-status><span class="dot"></span>Hors ligne</span>
+  {% else %}
+    <span class="pill pill--never" data-status><span class="dot"></span>Jamais vu</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro severity(value) %}
+  {%- set labels = {info: 'Info', warning: 'Avertissement', critical: 'Critique'} -%}
+  <span class="sev sev--{{ value }}">{{ labels[value] ?? value }}</span>
+{%- endmacro %}
+
+{% macro time(date) %}<time datetime="{{ date|date('c') }}" data-relative title="{{ date|date('d/m/Y H:i:s') }}">{{ date|date('d/m H:i') }}</time>{% endmacro %}
+
+{% macro metric(key, value) %}
+  {%- set units = {temperature: '°C', humidity: '%', rssi: 'dBm', heap: 'Ko', battery: '%'} -%}
+  {%- set icons = {temperature: 'thermo', humidity: 'pulse', rssi: 'wifi', heap: 'chip', battery: 'pulse'} -%}
+  <span class="metric" data-metric="{{ key }}" title="{{ key }}">
+    <svg class="icon" aria-hidden="true"><use href="#i-{{ icons[key] ?? 'pulse' }}"/></svg>
+    <b>{{ value is null ? '—' : value|number_format(key in ['temperature', 'humidity'] ? 1 : 0, ',', ' ') }}</b><small>{{ units[key] ?? '' }}</small>
+  </span>
+{%- endmacro %}

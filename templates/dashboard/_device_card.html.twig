@@ -1,0 +1,22 @@
+{% import '_partials/macros.html.twig' as ui %}
+{% set data = latest[device.id] ?? null %}
+<article class="device-card{{ device.online ? '' : ' is-offline' }}" data-device="{{ device.id }}">
+    <header>
+        <span class="device-card__icon device-card__icon--{{ device.type.value }}">{{ ui.icon(device.type.icon) }}</span>
+        <div class="device-card__title">
+            <a href="{{ path('app_device_show', {id: device.id}) }}">{{ device.name }}</a>
+            <small>{{ device.site.name }} · {{ device.hardware }}</small>
+        </div>
+        {% if device.armed %}<span class="armed" title="Surveillance armée">{{ ui.icon('lock') }}</span>{% endif %}
+    </header>
+    <div class="device-card__metrics">
+        {% for key in ['temperature', 'humidity', 'rssi', 'battery'] %}
+            {% if data and data.metrics[key] is defined %}{{ ui.metric(key, data.metrics[key]) }}{% endif %}
+        {% endfor %}
+        {% if not data %}<span class="muted small">Aucune mesure récente</span>{% endif %}
+    </div>
+    <footer>
+        {{ ui.status(device) }}
+        {% if device.lastSeenAt %}<small class="muted">{{ ui.time(device.lastSeenAt) }}</small>{% endif %}
+    </footer>
+</article>

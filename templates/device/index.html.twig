@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}Appareils{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div>
+        <h1>Appareils</h1>
+        <p class="muted">{{ devices|length }} appareil(s) enregistré(s)</p>
+    </div>
+    <a class="btn btn--primary" href="{{ path('app_device_new') }}">{{ ui.icon('plus') }}<span>Ajouter</span></a>
+</div>
+
+<form class="search" method="get" role="search">
+    {{ ui.icon('search') }}
+    <input type="search" name="q" value="{{ q }}" placeholder="Nom, adresse MAC, matériel…" aria-label="Rechercher un appareil">
+</form>
+
+<div class="table-wrap panel">
+    <table class="table table--responsive">
+        <thead>
+            <tr><th>Appareil</th><th>Site</th><th>Matériel</th><th>Firmware</th><th>Dernières mesures</th><th>État</th></tr>
+        </thead>
+        <tbody>
+        {% for device in devices %}
+            {% set data = latest[device.id] ?? null %}
+            <tr>
+                <td data-label="Appareil">
+                    <a class="cell-title" href="{{ path('app_device_show', {id: device.id}) }}">
+                        <span class="device-card__icon device-card__icon--{{ device.type.value }}">{{ ui.icon(device.type.icon) }}</span>
+                        <span>{{ device.name }}<small class="mono muted">{{ device.macAddress }}</small></span>
+                    </a>
+                </td>
+                <td data-label="Site">{{ device.site.name }}</td>
+                <td data-label="Matériel" class="mono">{{ device.hardware }}</td>
+                <td data-label="Firmware" class="mono">{{ device.firmwareVersion ?? '—' }}</td>
+                <td data-label="Mesures">
+                    {% if data %}
+                        {% for key in ['temperature', 'rssi', 'battery'] %}{% if data.metrics[key] is defined %}{{ ui.metric(key, data.metrics[key]) }}{% endif %}{% endfor %}
+                    {% else %}<span class="muted">—</span>{% endif %}
+                </td>
+                <td data-label="État">{{ ui.status(device) }} {% if device.armed %}<span class="armed" title="Armé">{{ ui.icon('lock') }}</span>{% endif %}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="empty">Aucun appareil{{ q ? ' ne correspond à « ' ~ q ~ ' »' }}.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

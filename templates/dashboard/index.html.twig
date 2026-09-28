@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}Tableau de bord{% endblock %}
+
+{% block body %}
+<div data-dashboard data-endpoint="{{ path('api_live_dashboard') }}">
+    <div class="page-head">
+        <div>
+            <h1>Tableau de bord</h1>
+            <p class="muted"><span class="live-dot"></span> Temps réel · <span data-updated>à l'instant</span></p>
+        </div>
+        <a class="btn btn--primary" href="{{ path('app_device_new') }}">{{ ui.icon('plus') }}<span>Ajouter un appareil</span></a>
+    </div>
+
+    <section class="kpis" aria-label="Indicateurs clés">
+        <div class="kpi">
+            <span class="kpi__label">Appareils en ligne</span>
+            <span class="kpi__value"><b data-kpi="online">{{ online }}</b><small>/ <span data-kpi="total">{{ devices|length }}</span></small></span>
+            <div class="gauge"><span data-kpi-gauge style="--p: {{ devices|length ? (online / devices|length * 100)|round : 0 }}%"></span></div>
+        </div>
+        <div class="kpi kpi--crit">
+            <span class="kpi__label">Alertes critiques</span>
+            <span class="kpi__value"><b data-kpi="critical">{{ alertCounts.critical ?? 0 }}</b></span>
+            <small class="muted"><span data-kpi="warning">{{ alertCounts.warning ?? 0 }}</span> avertissement(s)</small>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">Événements 24 h</span>
+            <span class="kpi__value"><b data-kpi="events">{{ eventTypes|reduce((c, v) => c + v, 0) }}</b></span>
+            <small class="muted">{% for type, n in eventTypes|slice(0, 2, true) %}{{ n }} {{ (eventLabels[type] ?? type)|lower }}{{ not loop.last ? ' · ' }}{% endfor %}</small>
+        </div>
+        <div class="kpi">
+            <span class="kpi__label">Surveillance</span>
+            <span class="kpi__value"><b data-kpi="armed">{{ devices|filter(d => d.armed)|length }}</b><small>armé(s)</small></span>
+            <small class="muted">{{ ui.icon('shield') }} Secure Boot V2 · OTA signé</small>
+        </div>
+    </section>
+
+    <div class="grid-2">
+        <section class="panel">
+            <header class="panel__head">
+                <h2>Activité · 24 h</h2>
+                <div class="legend"><span class="lg lg--info">Info</span><span class="lg lg--warning">Avert.</span><span class="lg lg--critical">Critique</span></div>
+            </header>
+            <div class="chart chart--bars" data-histogram role="img" aria-label="Histogramme des événements par heure"></div>
+        </section>
+
+        <section class="panel">
+            <header class="panel__head">
+                <h2>Alertes ouvertes</h2>
+                <a class="small" href="{{ path('app_alert_index') }}">Tout voir</a>
+            </header>
+            <ul class="alert-list" data-alert-list>
+                {% for alert in openAlerts %}
+                    <li class="alert-item alert-item--{{ alert.severity.value }}" id="alert-{{ alert.id }}">
+                        <div>
+                            {{ ui.severity(alert.severity.value) }}
+                            <p>{{ alert.message }}</p>
+                            <small class="muted">{{ ui.time(alert.createdAt) }}</small>
+                        </div>
+                        <form method="post" action="{{ path('app_alert_ack', {id: alert.id}) }}" data-ack>
+                            <input type="hidden" name="_token" value="{{ csrf_token('ack') }}">
+                            <button class="icon-btn" title="Acquitter" aria-label="Acquitter">{{ ui.icon('check') }}</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="empty">{{ ui.icon('shield') }} Tout est calme. Aucune alerte en attente.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    <div class="grid-main">
+        <section>
+            <div class="section-head">
+                <h2>Flotte</h2>
+                <a class="small" href="{{ path('app_device_index') }}">Gérer</a>
+            </div>
+            <div class="device-grid">
+                {% for device in devices %}
+                    {{ include('dashboard/_device_card.html.twig') }}
+                {% else %}
+                    <div class="empty panel">Aucun appareil. <a href="{{ path('app_device_new') }}">Enregistre ton premier ESP32</a>.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel panel--feed">
+            <header class="panel__head">
+                <h2>Flux d'événements</h2>
+                <span class="small muted">MongoDB</span>
+            </header>
+            <ol class="feed" data-feed>
+                {% for event in events %}
+                    <li class="feed__item feed__item--{{ event.severity }}">
+                        <span class="feed__dot"></span>
+                        <div><b>{{ event.deviceName }}</b> <span class="muted">·</span> {{ event.message }}<br><small class="muted">{{ event.typeLabel }} · {{ ui.time(event.occurredAt) }}</small></div>
+                    </li>
+                {% else %}
+                    <li class="empty">Aucun événement.</li>
+                {% endfor %}
+            </ol>
+        </section>
+    </div>
+</div>
+{% endblock %}

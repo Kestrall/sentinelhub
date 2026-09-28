@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+{% import '_partials/macros.html.twig' as ui %}
+{% block title %}{{ device.name }}{% endblock %}
+
+{% block body %}
+<div class="page-head">
+    <div>
+        <a class="back" href="{{ path('app_device_index') }}">← Appareils</a>
+        <h1 class="with-icon">
+            <span class="device-card__icon device-card__icon--{{ device.type.value }}">{{ ui.icon(device.type.icon) }}</span>
+            {{ device.name }}
+        </h1>
+        <p class="muted">{{ device.type.label }} · {{ device.site.name }} · {{ ui.status(device) }}</p>
+    </div>
+    <div class="actions">
+        <form method="post" action="{{ path('app_device_arm', {id: device.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('arm-' ~ device.id) }}">
+            {% if device.armed %}
+                <button class="btn btn--danger">{{ ui.icon('lock') }}<span>Armé · désarmer</span></button>
+            {% else %}
+                <button class="btn btn--ghost">{{ ui.icon('unlock') }}<span>Armer</span></button>
+            {% endif %}
+        </form>
+        <a class="btn btn--ghost" href="{{ path('app_device_edit', {id: device.id}) }}">{{ ui.icon('edit') }}<span>Modifier</span></a>
+    </div>
+</div>
+
+<section class="kpis kpis--compact">
+    {% for m in metrics %}
+        {% set value = latest ? (latest.metrics[m.value] ?? null) : null %}
+        {% if value is not null %}
+            <div class="kpi">
+                <span class="kpi__label">{{ m.label }}</span>
+                <span class="kpi__value"><b>{{ value|number_format(m.value in ['temperature', 'humidity'] ? 1 : 0, ',', ' ') }}</b><small>{{ m.unit }}</small></span>
+            </div>
+        {% endif %}
+    {% endfor %}
+    <div class="kpi">
+        <span class="kpi__label">Firmware</span>
+        <span class="kpi__value mono"><b>{{ device.firmwareVersion ?? '—' }}</b></span>
+        <small class="muted">{{ device.lastIp ?? 'IP inconnue' }}</small>
+    </div>
+</section>
+
+<section class="panel" data-series data-endpoint="{{ path('api_live_series', {id: device.id}) }}">
+    <header class="panel__head panel__head--wrap">
+        <div class="tabs" role="tablist" aria-label="Métrique">
+            {% for m in metrics %}
+                {% if latest and latest.metrics[m.value] is defined %}
+                    <button role="tab" type="button" data-metric-tab="{{ m.value }}" aria-selected="{{ loop.first ? 'true' : 'false' }}">{{ m.label }}</button>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="tabs tabs--small" role="group" aria-label="Période">
+            {% for h in [6, 24, 72, 168] %}
+                <button type="button" data-range="{{ h }}" aria-pressed="{{ h == 24 ? 'true' : 'false' }}">{{ h < 48 ? h ~ ' h' : (h / 24) ~ ' j' }}</button>
+            {% endfor %}
+        </div>
+    </header>
+    <div class="chart chart--line" data-chart><p class="muted empty">Chargement de la série…</p></div>
+    <p class="small muted chart-note">Moyenne et plage min/max agrégées côté MongoDB (<code>$dateTrunc</code> + <code>$group</code>).</p>
+</section>
+
+<div class="grid-2">
+    <section class="panel">
+        <header class="panel__head"><h2>Règles d'alerte</h2><span class="small muted">MySQL</span></header>
+        <ul class="rules">
+            {% for rule in device.rules %}
+                <li>
+                    {{ ui.severity(rule.severity.value) }}
+                    <span class="mono">{{ rule.describe }}</span>
+                    <small class="muted">anti-rebond {{ rule.cooldownMinutes }} min</small>
+                    <form method="post" action="{{ path('app_device_rule_delete', {id: device.id, rule: rule.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('rule-' ~ rule.id) }}">
+                        <button class="icon-btn" aria-label="Supprimer la règle">{{ ui.icon('trash') }}</button>
+                    </form>
+                </li>
+            {% else %}
+                <li class="empty">Aucune règle. Ajoute un seuil ci-dessous.</li>
+            {% endfor %}
+        </ul>
+        <details class="add-rule" {{ ruleForm.vars.submitted ? 'open' }}>
+            <summary>{{ ui.icon('plus') }} Nouvelle règle</summary>
+            {{ form_start(ruleForm, {attr: {class: 'form form--inline'}}) }}
+                {{ form_widget(ruleForm) }}
+                <button class="btn btn--primary" type="submit">Ajouter</button>
+            {{ form_end(ruleForm) }}
+        </details>
+    </section>
+
+    <section class="panel panel--feed">
+        <header class="panel__head"><h2>Derniers événements</h2><span class="small muted">MongoDB</span></header>
+        <ol class="feed">
+            {% for event in events %}
+                <li class="feed__item feed__item--{{ event.severity }}">
+                    <span class="feed__dot"></span>
+                    <div>{{ event.message }}<br><small class="muted">{{ event.typeLabel }} · {{ ui.time(event.occurredAt) }}</small></div>
+                </li>
+            {% else %}
+                <li class="empty">Aucun événement.</li>
+            {% endfor %}
+        </ol>
+    </section>
+</div>
+
+<section class="panel">
+    <header class="panel__head"><h2>{{ ui.icon('key') }} Intégration firmware</h2></header>
+    <dl class="specs">
+        <div><dt>Adresse MAC</dt><dd class="mono">{{ device.macAddress }}</dd></div>
+        <div><dt>Matériel</dt><dd class="mono">{{ device.hardware }}</dd></div>
+        <div><dt>Token</dt><dd class="mono">{{ device.tokenPrefix }}••••••••</dd></div>
+        <div><dt>Enregistré</dt><dd>{{ device.createdAt|date('d/m/Y') }}</dd></div>
+    </dl>
+    <div class="code-block">
+        <div class="code-block__head"><span>curl</span><button class="btn btn--ghost btn--sm" type="button" data-copy>{{ ui.icon('copy') }}Copier</button></div>
+<pre data-copy-source>curl -X POST {{ url('api_ingest_telemetry') }} \
+  -H "Authorization: Bearer $SENTINEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"metrics": {"temperature": 22.4, "rssi": -61}, "firmware": "{{ device.firmwareVersion ?? '1.4.2' }}"}'</pre>
+    </div>
+    <div class="danger-zone">
+        <form method="post" action="{{ path('app_device_token', {id: device.id}) }}" data-confirm="Régénérer le token ? L'ancien cessera immédiatement de fonctionner.">
+            <input type="hidden" name="_token" value="{{ csrf_token('token-' ~ device.id) }}">
+            <button class="btn btn--ghost btn--sm">{{ ui.icon('key') }}Régénérer le token</button>
+        </form>
+        <form method="post" action="{{ path('app_device_delete', {id: device.id}) }}" data-confirm="Supprimer définitivement cet appareil ?">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete-device-' ~ device.id) }}">
+            <button class="btn btn--danger btn--sm">{{ ui.icon('trash') }}Supprimer</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
